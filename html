@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魅惑日語冒險：可愛日文單字發音卡與生成器 🌸✨</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            pink: '#FFD1DC',
+                            purple: '#E6E6FA',
+                            blue: '#BECDFF',
+                            green: '#C1E1C1',
+                            yellow: '#FCF7DE',
+                            peach: '#FCE1D4',
+                            darkPink: '#FF6B8B',
+                            darkPurple: '#7B61FF',
+                            darkBlue: '#4A69FF',
+                        }
+                    },
+                    fontFamily: {
+                        jp: ['"Zen Maru Gothic"', '"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #FFF5F7 0%, #F3F0FF 50%, #F0F4FF 100%);
+            background-attachment: fixed;
+            user-select: none;
+        }
+
+        /* 3D Card Flip Effect */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .animate-float {
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        /* Pulse Glow Effect */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 107, 139, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(255, 107, 139, 0.8); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Button Press Effect */
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+        }
+        .btn-bounce:active {
+            transform: scale(0.92);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FFF0F5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFB6C1;
+            border-radius: 10px;
+        }
+
+        /* Print Layout Rules */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .card-grid-print {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 12px !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+    <!-- Header Navbar -->
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-pink-100 shadow-sm no-print">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('map')">
+                <div class="w-11 h-11 bg-pink-100 rounded-2xl flex items-center justify-center text-2xl shadow-inner animate-bounce">
+                    🐱
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
+                        魅惑日語大冒險 🌸
+                    </h1>
+                    <p class="text-xs text-gray-500 font-bold">完整假名 x 中文對照 x 地圖通關學習</p>
+                </div>
+            </div>
+
+            <!-- Progress Summary Stars -->
+            <div class="flex items-center gap-2 bg-pink-50/80 px-3 py-1.5 rounded-2xl border border-pink-100 text-xs font-bold text-gray-600">
+                <span>⭐ 總星數: <span id="totalStarsCount" class="text-amber-500 font-extrabold text-sm">0</span> / 24</span>
+                <span class="text-pink-300">|</span>
+                <span>🏆 勳章: <span id="totalBadgesCount" class="text-purple-600 font-extrabold text-sm">0</span> / 8</span>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="flex items-center gap-1 bg-pink-50 p-1.5 rounded-2xl border border-pink-100 overflow-x-auto max-w-full">
+                <button id="nav-map" onclick="switchTab('map')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all bg-white text-pink-600 shadow-sm btn-bounce flex items-center gap-1.5">
+                    <i class="fa-solid fa-map"></i> 地圖冒險
+                </button>
+                <button id="nav-cards" onclick="switchTab('cards')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:text-pink-600 transition-all btn-bounce flex items-center gap-1.5">
+                    <i class="fa-solid fa-layer-group"></i> 單字庫
+                </button>
+                <button id="nav-quiz" onclick="switchTab('quiz')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:text-pink-600 transition-all btn-bounce flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-question"></i> 測驗
+                </button>
+                <button id="nav-match" onclick="switchTab('match')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:text-pink-600 transition-all btn-bounce flex items-center gap-1.5">
+                    <i class="fa-solid fa-puzzle-piece"></i> 對對碰
+                </button>
+                <button id="nav-generator" onclick="switchTab('generator')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:text-pink-600 transition-all btn-bounce flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 稱號生成器
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full z-10">
+
+        <!-- ==================== TAB 1: 冒險地圖通關 (QUEST MAP) ==================== -->
+        <section id="tab-map" class="space-y-6">
+            
+            <div class="bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/30 backdrop-blur-sm">🗺️ 地圖通關模式</span>
+                        <h2 class="text-2xl sm:text-3xl font-black mt-2">魅惑詞彙探索之旅</h2>
+                        <p class="text-xs sm:text-sm text-pink-100 mt-1 max-w-xl">
+                            與嚮導 Moko 🐱 探索日文魅惑單字！每個詞彙皆提供完整的平假名讀音與中文翻譯。
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/30">
+                        <div class="text-center">
+                            <p class="text-xs text-pink-100">當前關卡</p>
+                            <p id="mapCurrentStageText" class="text-xl font-black">第 1 關</p>
+                        </div>
+                        <div class="w-px h-8 bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-pink-100">探險完成度</p>
+                            <p id="mapCompletionPercent" class="text-xl font-black">0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- World Switch Tabs -->
+            <div class="flex justify-center gap-3 my-4">
+                <button onclick="switchWorld(1)" id="worldTab1" class="px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-pink-600 border-2 border-pink-300 flex items-center gap-2">
+                    ✨ 第一世界：光芒與極致魅力 (1-4 關)
+                </button>
+                <button onclick="switchWorld(2)" id="worldTab2" class="px-5 py-2.5 rounded-2xl font-black text-sm transition-all bg-gray-100 text-gray-500 border-2 border-transparent hover:bg-purple-50 flex items-center gap-2">
+                    🥀 第二世界：危險與暗黑魅惑 (5-8 關)
+                </button>
+            </div>
+
+            <!-- Map Stages Container -->
+            <div class="bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-md border border-pink-100 relative min-h-[480px] flex flex-col justify-center items-center overflow-hidden">
+                <div id="mapAvatar" class="absolute z-20 transition-all duration-700 ease-out flex flex-col items-center pointer-events-none" style="top: 0; left: 0; transform: translate(-50%, -100%);">
+                    <div class="bg-white/90 text-pink-600 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow-md border border-pink-200 mb-1 animate-pulse">
+                        📍 目前位置
+                    </div>
+                    <div class="w-12 h-12 bg-pink-400 text-white rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-white animate-float">
+                        🐱
+                    </div>
+                </div>
+
+                <div id="stagesContainer" class="w-full max-w-2xl relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 py-4">
+                    <!-- Dynamic Stage Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: 單字庫 (FLASHCARDS & LIBRARY) ==================== -->
+        <section id="tab-cards" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-4 sm:p-6 shadow-md border border-pink-100 no-print">
+                <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                    
+                    <div class="relative w-full md:w-1/3">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchInput" oninput="filterWords()" placeholder="搜尋漢字、平假名或中文翻譯..."
+                            class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm">
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto justify-center">
+                        <button onclick="setCategory('all')" id="cat-all" class="cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-pink-500 text-white shadow-sm btn-bounce">全部 (200)</button>
+                        <button onclick="setCategory('positive')" id="cat-positive" class="cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-pink-100 btn-bounce">✨ 正面魅力</button>
+                        <button onclick="setCategory('negative')" id="cat-negative" class="cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-purple-100 btn-bounce">🥀 負面魅力</button>
+                        <button onclick="setCategory('fav')" id="cat-fav" class="cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-yellow-100 btn-bounce">❤️ 收藏 (<span id="favCount">0</span>)</button>
+                    </div>
+
+                    <div class="flex gap-2 w-full md:w-auto justify-end">
+                        <button onclick="openAddModal()" class="px-4 py-2 bg-pastel-green/70 hover:bg-pastel-green text-green-900 rounded-2xl text-xs font-bold btn-bounce shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> 新增詞彙
+                        </button>
+                        <button onclick="window.print()" class="px-4 py-2 bg-pastel-blue/70 hover:bg-pastel-blue text-blue-900 rounded-2xl text-xs font-bold btn-bounce shadow-sm">
+                            <i class="fa-solid fa-print mr-1"></i> 列印/PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Grid -->
+            <div id="wordGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 card-grid-print">
+                <!-- JS Generated Cards -->
+            </div>
+
+            <div id="emptyState" class="hidden text-center py-16 text-gray-400">
+                <i class="fa-regular fa-face-frown text-5xl mb-3"></i>
+                <p class="text-lg font-bold">沒有找到符合搜尋條件的詞彙哦～</p>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: 四選一測驗 (QUIZ) ==================== -->
+        <section id="tab-quiz" class="hidden space-y-6 max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-md border border-pink-100 text-center relative overflow-hidden">
+                
+                <div class="w-full bg-pink-100 rounded-full h-3 mb-6 overflow-hidden">
+                    <div id="quizProgressBar" class="bg-gradient-to-r from-pink-400 to-purple-500 h-full rounded-full transition-all duration-300" style="width: 10%;"></div>
+                </div>
+
+                <div class="flex justify-between items-center mb-4 text-xs font-bold text-gray-500">
+                    <span id="quizProgressText">第 1 / 5 題</span>
+                    <span id="quizStageTitle" class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold">自由練習模式</span>
+                    <div class="flex gap-3">
+                        <span class="text-green-500"><i class="fa-solid fa-circle-check"></i> <span id="quizScore">0</span></span>
+                        <span class="text-red-400"><i class="fa-solid fa-circle-xmark"></i> <span id="quizWrong">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Question Box -->
+                <div class="my-6 py-6 bg-pink-50/50 rounded-2xl border border-pink-100 px-4">
+                    <span id="quizEmoji" class="text-4xl block mb-2">✨</span>
+                    <!-- Kanji Kanji Word -->
+                    <div class="text-3xl sm:text-4xl font-black text-gray-800 my-1 flex items-center justify-center gap-3">
+                        <span id="quizQuestion">美貌</span>
+                        <button onclick="playTTS(document.getElementById('quizQuestion').innerText)" class="text-pink-400 hover:text-pink-600 text-2xl btn-bounce">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <!-- Furigana Reader -->
+                    <div class="inline-block bg-white/80 px-4 py-1 rounded-full border border-pink-200 mt-2">
+                        <p class="text-pink-600 font-extrabold text-sm sm:text-base">讀音 (平假名): <span id="quizFurigana">びぼう</span></p>
+                    </div>
+                </div>
+
+                <!-- Options Grid -->
+                <div id="quizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6">
+                    <!-- Dynamic Options with Japanese & Chinese -->
+                </div>
+
+                <div id="quizFeedback" class="mt-6 hidden">
+                    <div id="quizResultMsg" class="font-bold text-base mb-4"></div>
+                    <button id="quizNextBtn" onclick="nextQuizQuestion()" class="w-full py-3.5 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl font-black transition shadow-md btn-bounce">
+                        下一題 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: 記憶對對碰 (MEMORY MATCH) ==================== -->
+        <section id="tab-match" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 shadow-md border border-pink-100">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">🧩 雙語記憶配對挑戰</h2>
+                        <p class="text-xs text-gray-500">配對日文卡（含漢字與平假名）與中文解釋卡！</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-pink-50 px-4 py-2 rounded-2xl text-xs font-bold text-pink-600 border border-pink-100">
+                            ⏱️ 計時: <span id="matchTimer" class="text-sm font-black">0</span> 秒
+                        </div>
+                        <button onclick="initMatchGame()" class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xs font-bold transition shadow-sm btn-bounce">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> 重置遊戲
+                        </button>
+                    </div>
+                </div>
+
+                <div id="matchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                    <!-- Dynamic Match Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: 角色魅力稱號生成器 (GENERATOR) ==================== -->
+        <section id="tab-generator" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 rounded-3xl p-6 sm:p-10 shadow-lg border border-pink-200 text-center relative overflow-hidden">
+                
+                <div class="w-20 h-20 bg-white rounded-full shadow-md mx-auto flex items-center justify-center text-4xl mb-4 animate-float">
+                    🎭
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-800 mb-2">角色魅力稱號與風格標籤生成器</h2>
+                <p class="text-xs sm:text-sm text-gray-600 mb-8 max-w-md mx-auto">為創作者提供組合稱號！一鍵生成包含日文漢字、平假名與中文釋義的魅惑角色屬性。</p>
+
+                <div class="flex justify-center gap-3 mb-8">
+                    <label class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm text-xs font-bold cursor-pointer btn-bounce">
+                        <input type="radio" name="genType" value="mixed" checked class="text-pink-500 focus:ring-pink-400"> 🎲 混沌混和
+                    </label>
+                    <label class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm text-xs font-bold cursor-pointer btn-bounce">
+                        <input type="radio" name="genType" value="positive" class="text-pink-500 focus:ring-pink-400"> ✨ 純粹光彩
+                    </label>
+                    <label class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm text-xs font-bold cursor-pointer btn-bounce">
+                        <input type="radio" name="genType" value="negative" class="text-pink-500 focus:ring-pink-400"> 🥀 致命毒性
+                    </label>
+                </div>
+
+                <button onclick="generateCharacter()" class="px-8 py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:to-indigo-600 text-white rounded-3xl font-black text-base sm:text-lg shadow-lg transition transform active:scale-95 mb-8 btn-bounce">
+                    ✨ 一鍵抽卡！生成角色屬性
+                </button>
+
+                <div id="genResultCard" class="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-md border border-pink-100 space-y-6">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Character Profile & Charm Title</p>
+                    
+                    <div id="genTitleOutput" class="text-xl sm:text-2xl font-black text-pink-600 bg-pink-50 py-3 px-4 rounded-2xl border border-pink-200">
+                        點擊上方按鈕開始生成...
+                    </div>
+
+                    <div id="genTags" class="flex flex-wrap justify-center gap-3">
+                        <!-- Dynamic Tags with Furigana & Chinese -->
+                    </div>
+
+                    <div id="genSummary" class="text-xs sm:text-sm text-gray-600 bg-pink-50/50 p-4 rounded-2xl border border-pink-100 hidden text-left leading-relaxed">
+                        <!-- Summary Description -->
+                    </div>
+
+                    <div class="flex justify-center gap-3 pt-2">
+                        <button onclick="copyCharResult()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold transition btn-bounce">
+                            <i class="fa-regular fa-copy mr-1"></i> 複製角色屬性資料
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Mascot Guide (Moko) -->
+    <div id="mascotContainer" class="fixed bottom-4 right-4 z-40 flex items-end gap-3 no-print">
+        <div id="mascotBubble" class="bg-white/95 backdrop-blur-md text-gray-800 p-3.5 rounded-2xl rounded-br-none shadow-xl border border-pink-200 text-xs sm:text-sm font-bold max-w-xs transition-all duration-300 animate-float">
+            <span id="mascotText">こんにちは！我是嚮導 Moko 🐱！所有單字都有標註平假名與中文意思哦！</span>
+        </div>
+        <button onclick="interactMascot()" class="w-14 h-14 bg-gradient-to-tr from-pink-400 to-purple-400 rounded-full flex items-center justify-center text-3xl shadow-xl border-2 border-white btn-bounce relative group flex-shrink-0">
+            🐱
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span>
+            </span>
+        </button>
+    </div>
+
+    <!-- Custom Word Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800">➕ 新增自訂魅力詞彙</h3>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="addWordForm" onsubmit="saveCustomWord(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">日文 (漢字 / 單字)</label>
+                    <input type="text" id="newWord" required placeholder="例如：美貌" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-300">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">平假名 (讀音)</label>
+                    <input type="text" id="newFurigana" required placeholder="例如：びぼう" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-300">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">中文釋義</label>
+                    <input type="text" id="newMeaning" required placeholder="例如：美貌、容顏姣好" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-300">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">屬性分類</label>
+                        <select id="newType" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-300">
+                            <option value="positive">正面魅力 ✨</option>
+                            <option value="negative">負面魅力 🥀</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">代表 Emoji</label>
+                        <input type="text" id="newEmoji" value="💫" maxlength="2" class="w-full px-3 py-2 border rounded-xl text-sm text-center focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="button" onclick="closeAddModal()" class="w-1/2 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-xl text-xs btn-bounce">取消</button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl text-xs transition btn-bounce">儲存單字</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 border-t border-pink-100 py-4 text-center text-xs text-gray-400 no-print mt-12">
+        <p>🌸 魅惑日語冒險 • Web Audio & Web Speech API Interactive Learning</p>
+    </footer>
+
+    <script>
+        // Audio Synthesizer (Web Audio API)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'flip') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                osc.frequency.setValueAtTime(783.99, now + 0.16);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(180, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'clear') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.15, now + idx * 0.1);
+                    g.gain.linearRampToValueAtTime(0, now + idx * 0.1 + 0.2);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.2);
+                });
+            }
+        }
+
+        // Japanese Speech Synthesis (TTS)
+        function playTTS(text) {
+            playSound('click');
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.88;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        const initialDatabase = [
+            // World 1 - Stage 1: 外貌魅力 (Appearance)
+            { id: 1, stageId: 1, word: "美貌", furigana: "びぼう", meaning: "美貌、容顏姣好", type: "positive", emoji: "✨" },
+            { id: 2, stageId: 1, word: "容姿端麗", furigana: "ようしたんれい", meaning: "端莊美麗、儀態萬千", type: "positive", emoji: "👑" },
+            { id: 3, stageId: 1, word: "透明感", furigana: "とうめいかん", meaning: "清澈透明感、清新脫俗", type: "positive", emoji: "💧" },
+            { id: 4, stageId: 1, word: "清潔感", furigana: "せいけつかん", meaning: "乾淨清爽感", type: "positive", emoji: "🌿" },
+            { id: 5, stageId: 1, word: "凛とした", furigana: "りんとした", meaning: "凜然、凜冽威嚴美", type: "positive", emoji: "❄️" },
+            { id: 6, stageId: 1, word: "気品", furigana: "きひん", meaning: "高雅氣質", type: "positive", emoji: "💎" },
+
+            // World 1 - Stage 2: 氣場聲韻 (Aura)
+            { id: 26, stageId: 2, word: "オーラ", furigana: "おーら", meaning: "獨特氣場、光芒", type: "positive", emoji: "✨" },
+            { id: 27, stageId: 2, word: "色気", furigana: "いろけ", meaning: "性感魅力、韻味", type: "positive", emoji: "💋" },
+            { id: 28, stageId: 2, word: "大人の色気", furigana: "おとなのいろけ", meaning: "成熟大人性感韻味", type: "positive", emoji: "🍷" },
+            { id: 29, stageId: 2, word: "カリスマ性", furigana: "かりすませい", meaning: "超凡領袖魅力", type: "positive", emoji: "👑" },
+            { id: 30, stageId: 2, word: "存在感", furigana: "そんざいかん", meaning: "存在感強烈", type: "positive", emoji: "☀️" },
+            { id: 31, stageId: 2, word: "ミステリアス", furigana: "みすてりあす", meaning: "神秘莫測", type: "positive", emoji: "🌙" },
+
+            // World 1 - Stage 3: 性格美質 (Personality)
+            { id: 51, stageId: 3, word: "優しさ", furigana: "やさしさ", meaning: "溫柔善良", type: "positive", emoji: "💖" },
+            { id: 52, stageId: 3, word: "思いやり", furigana: "おもいやり", meaning: "體貼入微", type: "positive", emoji: "💌" },
+            { id: 53, stageId: 3, word: "謙虚", furigana: "けんきょ", meaning: "謙虛有禮", type: "positive", emoji: "🙇" },
+            { id: 54, stageId: 3, word: "誠実", furigana: "せいじつ", meaning: "誠實真摯", type: "positive", emoji: "🛡️" },
+            { id: 55, stageId: 3, word: "健気", furigana: "けなげ", meaning: "堅強勇敢、努力討人愛", type: "positive", emoji: "🌱" },
+            { id: 56, stageId: 3, word: "芯が強い", furigana: "しんがつよい", meaning: "內心堅毅不拔", type: "positive", emoji: "🎋" },
+
+            // World 1 - Stage 4: 情感吸引 (Attraction)
+            { id: 76, stageId: 4, word: "惹きつける", furigana: "ひきつける", meaning: "深深吸引", type: "positive", emoji: "🧲" },
+            { id: 77, stageId: 4, word: "癒やし", furigana: "いやし", meaning: "療癒人心", type: "positive", emoji: "🍃" },
+            { id: 78, stageId: 4, word: "虜にする", furigana: "とりこにする", meaning: "令人神魂顛倒", type: "positive", emoji: "💘" },
+            { id: 79, stageId: 4, word: "魅了する", furigana: "みりょうする", meaning: "著迷致敬", type: "positive", emoji: "✨" },
+            { id: 80, stageId: 4, word: "心奪われる", furigana: "こころうばわれる", meaning: "被奪走心神", type: "positive", emoji: "💓" },
+
+            // World 2 - Stage 5: 致命毒性 (Femme Fatale)
+            { id: 101, stageId: 5, word: "ファム・ファタール", furigana: "ふぁむ・ふぁたーる", meaning: "致命毒藥般的命運之女", type: "negative", emoji: "💋" },
+            { id: 102, stageId: 5, word: "魔性の女", furigana: "ましょうのおんな", meaning: "蠱惑人心的魔性女子", type: "negative", emoji: "🕷️" },
+            { id: 103, stageId: 5, word: "危険な香り", furigana: "きけんなかおり", meaning: "危險致命的吸引力", type: "negative", emoji: "🥀" },
+            { id: 104, stageId: 5, word: "中毒性", furigana: "ちゅうどくせい", meaning: "令人上癮無法自拔", type: "negative", emoji: "🧪" },
+            { id: 105, stageId: 5, word: "毒薬", furigana: "どくやく", meaning: "劇毒般致命魅惑", type: "negative", emoji: "☠️" },
+
+            // World 2 - Stage 6: 暗黑頹廢 (Dark Aesthetic)
+            { id: 126, stageId: 6, word: "妖艶", furigana: "ようえん", meaning: "妖嬈美艷", type: "negative", emoji: "🕯️" },
+            { id: 127, stageId: 6, word: "退廃的", furigana: "たいはいてき", meaning: "頹廢美感", type: "negative", emoji: "🥀" },
+            { id: 128, stageId: 6, word: "影のある美しさ", furigana: "かげのあるうつくしさ", meaning: "帶有陰影悲傷的美", type: "negative", emoji: "🌘" },
+            { id: 129, stageId: 6, word: "狂気", furigana: "きょうき", meaning: "瘋狂與狂亂", type: "negative", emoji: "👁️" },
+            { id: 130, stageId: 6, word: "病みつき", furigana: "やみつき", meaning: "令人病態般上癮", type: "negative", emoji: "💊" },
+
+            // World 2 - Stage 7: 虛妄操控 (Manipulative)
+            { id: 151, stageId: 7, word: "プレイボーイ", furigana: "ぷれいぼーい", meaning: "花花公子、情場浪子", type: "negative", emoji: "🃏" },
+            { id: 152, stageId: 7, word: "思わせぶり", furigana: "おもわせぶり", meaning: "故作姿態、玩弄曖昧", type: "negative", emoji: "😏" },
+            { id: 153, stageId: 7, word: "あざとい", furigana: "あざとい", meaning: "耍小聰明裝可愛、耍心機", type: "negative", emoji: "🦊" },
+            { id: 154, stageId: 7, word: "計算高い", furigana: "けいさんだかい", meaning: "善於計算心機", type: "negative", emoji: "🧮" },
+
+            // World 2 - Stage 8: 執念禁忌 (Obsession/Taboo)
+            { id: 176, stageId: 8, word: "執着", furigana: "しゅうちゃく", meaning: "瘋狂執著不放", type: "negative", emoji: "🔒" },
+            { id: 177, stageId: 8, word: "独占欲", furigana: "どくせんよく", meaning: "強烈獨佔慾", type: "negative", emoji: "🗝️" },
+            { id: 178, stageId: 8, word: "嫉妬", furigana: "しっと", meaning: "嫉妒之火", type: "negative", emoji: "🔥" },
+            { id: 179, stageId: 8, word: "狂愛", furigana: "きょうあい", meaning: "扭曲狂熱的愛", type: "negative", emoji: "🩸" },
+            { id: 180, stageId: 8, word: "依存", furigana: "いぞん", meaning: "病態依存病嬌", type: "negative", emoji: "🔗" }
+        ];
+
+        const mapStages = [
+            { id: 1, world: 1, title: "第 1 關：外貌與姿態", desc: "學習透明感、容姿端麗等外貌詞彙", badge: "🌸 傾城新手", icon: "✨" },
+            { id: 2, world: 1, title: "第 2 關：氣場與獨特聲韻", desc: "掌握オーラ、色気等魅惑氣場", badge: "🍷 韻味達人", icon: "🔮" },
+            { id: 3, world: 1, title: "第 3 關：性格與溫柔美質", desc: "學習優しさ、健気等內在美詞", badge: "💖 療癒大師", icon: "🌱" },
+            { id: 4, world: 1, title: "第 4 關：情感吸引力極致", desc: "掌握虜にする、魅了等勾魂語彙", badge: "💘 心動王爵", icon: "🧲" },
+            { id: 5, world: 2, title: "第 5 關：致命毒性 Femme Fatale", desc: "解鎖魔性の女、危険な香り等誘惑詞", badge: "💋 致命魔女", icon: "🐍" },
+            { id: 6, world: 2, title: "第 6 關：暗黑頹廢與狂氣", desc: "學習妖艶、退廃的等美學詞彙", badge: "🕯️ 暗黑詩人", icon: "🌒" },
+            { id: 7, world: 2, title: "第 7 關：心機與虛妄操控", desc: "掌握あざとい、思わせぶり等心機語", badge: "🦊 狐魅導師", icon: "🎭" },
+            { id: 8, world: 2, title: "第 8 關：執念與禁忌深淵", desc: "解鎖狂愛、執着等沉淪語彙", badge: "⛓️ 禁忌主宰", icon: "🖤" }
+        ];
+
+        // State Management
+        let database = [...initialDatabase];
+        let favorites = JSON.parse(localStorage.getItem('jp_favs') || '[]');
+        let customWords = JSON.parse(localStorage.getItem('jp_custom_words') || '[]');
+        database = [...database, ...customWords];
+
+        let stageProgress = JSON.parse(localStorage.getItem('jp_stage_progress') || '{}');
+        if (!stageProgress[1]) {
+            stageProgress[1] = { unlocked: true, stars: 0, score: 0 };
+        }
+
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let currentWorld = 1;
+
+        let quizQuestions = [];
+        let quizIndex = 0;
+        let quizScore = 0;
+        let quizWrong = 0;
+        let quizCurrentStageId = null;
+
+        let matchCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let matchTimer = null;
+        let matchSeconds = 0;
+
+        // Mascot Dialogue Interaction
+        function interactMascot(customText) {
+            playSound('click');
+            const mascotText = document.getElementById('mascotText');
+            if (customText) {
+                mascotText.innerText = customText;
+            } else {
+                const msgs = [
+                    "こんにちは！所有詞彙都有附上平假名與中文解釋哦！✨",
+                    "點擊「地圖冒險」賺取 ⭐ 星星與解鎖限定勳章吧！",
+                    "點擊 🔊 喇叭按鈕可以聆聽標準日語發音！",
+                    "加油！頑張って (Ganbatte)！我相信你一定能破關！",
+                    "嘗試使用「角色稱號生成器」製作你的特色風格屬性吧！🎭"
+                ];
+                mascotText.innerText = msgs[Math.floor(Math.random() * msgs.length)];
+            }
+        }
+
+        function switchWorld(worldNum) {
+            playSound('click');
+            currentWorld = worldNum;
+            document.getElementById('worldTab1').className = worldNum === 1 ?
+                "px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-pink-600 border-2 border-pink-300 flex items-center gap-2" :
+                "px-5 py-2.5 rounded-2xl font-black text-sm transition-all bg-gray-100 text-gray-500 border-2 border-transparent hover:bg-pink-50 flex items-center gap-2";
+
+            document.getElementById('worldTab2').className = worldNum === 2 ?
+                "px-5 py-2.5 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-purple-600 border-2 border-purple-300 flex items-center gap-2" :
+                "px-5 py-2.5 rounded-2xl font-black text-sm transition-all bg-gray-100 text-gray-500 border-2 border-transparent hover:bg-purple-50 flex items-center gap-2";
+
+            renderQuestMap();
+        }
+
+        function renderQuestMap() {
+            const container = document.getElementById('stagesContainer');
+            container.innerHTML = '';
+
+            const worldStages = mapStages.filter(s => s.world === currentWorld);
+
+            let totalStars = 0;
+            let totalBadges = 0;
+            Object.values(stageProgress).forEach(p => {
+                totalStars += (p.stars || 0);
+                if (p.stars >= 2) totalBadges++;
+            });
+            document.getElementById('totalStarsCount').innerText = totalStars;
+            document.getElementById('totalBadgesCount').innerText = totalBadges;
+
+            let currentActiveStageId = 1;
+            mapStages.forEach(s => {
+                if (stageProgress[s.id] && stageProgress[s.id].unlocked) {
+                    currentActiveStageId = s.id;
+                }
+            });
+            document.getElementById('mapCurrentStageText').innerText = `第 ${currentActiveStageId} 關`;
+            const completion = Math.round((Object.keys(stageProgress).length / mapStages.length) * 100);
+            document.getElementById('mapCompletionPercent').innerText = `${completion}%`;
+
+            worldStages.forEach((stage) => {
+                const info = stageProgress[stage.id] || { unlocked: false, stars: 0, score: 0 };
+                const isCurrent = stage.id === currentActiveStageId;
+
+                const starsHtml = `
+                    <div class="flex gap-1 text-sm my-1">
+                        <span class="${info.stars >= 1 ? 'text-amber-400' : 'text-gray-300'}">★</span>
+                        <span class="${info.stars >= 2 ? 'text-amber-400' : 'text-gray-300'}">★</span>
+                        <span class="${info.stars >= 3 ? 'text-amber-400' : 'text-gray-300'}">★</span>
+                    </div>
+                `;
+
+                const stageCard = document.createElement('div');
+                stageCard.className = `stage-node relative rounded-3xl p-5 border-2 transition-all duration-300 flex flex-col justify-between ${
+                    info.unlocked ? 'bg-white border-pink-200 shadow-md hover:shadow-xl cursor-pointer hover:-translate-y-1' : 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+                } ${isCurrent ? 'ring-4 ring-pink-300 pulse-glow' : ''}`;
+
+                stageCard.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="w-10 h-10 rounded-2xl ${info.unlocked ? 'bg-pink-100 text-pink-600' : 'bg-gray-200 text-gray-400'} font-black flex items-center justify-center text-lg">
+                            ${stage.icon}
+                        </span>
+                        ${info.unlocked ? starsHtml : '<i class="fa-solid fa-lock text-gray-400 text-lg"></i>'}
+                    </div>
+
+                    <div class="my-3">
+                        <h4 class="font-extrabold text-base text-gray-800">${stage.title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${stage.desc}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-100 text-xs font-bold">
+                        <span class="text-purple-600">${info.unlocked ? stage.badge : '🔒 鎖定中'}</span>
+                        ${info.unlocked ? `
+                            <button onclick="startStageChallenge(${stage.id})" class="px-3 py-1.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl shadow-sm btn-bounce">
+                                ${info.score > 0 ? '重新挑戰' : '開始通關'}
+                            </button>
+                        ` : '<span class="text-gray-400 text-[11px]">前置關卡解鎖</span>'}
+                    </div>
+                `;
+
+                container.appendChild(stageCard);
+            });
+
+            // Reposition Avatar
+            setTimeout(() => {
+                const activeCard = container.querySelector('.pulse-glow');
+                if (activeCard) {
+                    const rect = activeCard.getBoundingClientRect();
+                    const parentRect = container.parentElement.getBoundingClientRect();
+                    const top = rect.top - parentRect.top;
+                    const left = rect.left - parentRect.left + rect.width / 2;
+
+                    const avatar = document.getElementById('mapAvatar');
+                    avatar.style.top = `${top}px`;
+                    avatar.style.left = `${left}px`;
+                }
+            }, 100);
+        }
+
+        function startStageChallenge(stageId) {
+            playSound('click');
+            quizCurrentStageId = stageId;
+
+            let stageWords = database.filter(w => w.stageId === stageId);
+            if (stageWords.length < 4) {
+                stageWords = database.slice(0, 6);
+            }
+
+            quizQuestions = [...stageWords].sort(() => 0.5 - Math.random()).slice(0, 5);
+            quizIndex = 0;
+            quizScore = 0;
+            quizWrong = 0;
+
+            document.getElementById('quizStageTitle').innerText = `🏆 通關考驗：第 ${stageId} 關`;
+            switchTab('quiz');
+            showQuizQuestion();
+
+            interactMascot(`正在進行第 ${stageId} 關挑戰！記得注意選項裡的中文與平假名哦！`);
+        }
+
+        function showQuizQuestion() {
+            if (quizIndex >= quizQuestions.length) {
+                const percent = Math.round((quizScore / quizQuestions.length) * 100);
+                let stars = 0;
+                if (percent >= 100) stars = 3;
+                else if (percent >= 80) stars = 2;
+                else if (percent >= 60) stars = 1;
+
+                if (quizCurrentStageId) {
+                    const prev = stageProgress[quizCurrentStageId] || { unlocked: true };
+                    stageProgress[quizCurrentStageId] = {
+                        unlocked: true,
+                        stars: Math.max(prev.stars || 0, stars),
+                        score: Math.max(prev.score || 0, percent)
+                    };
+
+                    if (percent >= 60 && quizCurrentStageId < mapStages.length) {
+                        const nextId = quizCurrentStageId + 1;
+                        if (!stageProgress[nextId]) {
+                            stageProgress[nextId] = { unlocked: true, stars: 0, score: 0 };
+                        } else {
+                            stageProgress[nextId].unlocked = true;
+                        }
+                    }
+
+                    localStorage.setItem('jp_stage_progress', JSON.stringify(stageProgress));
+                }
+
+                if (stars >= 2) {
+                    playSound('clear');
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+
+                document.getElementById('quizOptions').innerHTML = `
+                    <div class="col-span-2 py-6 text-center">
+                        <span class="text-5xl">${stars >= 2 ? '🎉' : '💪'}</span>
+                        <h3 class="text-2xl font-black text-gray-800 my-3">${stars >= 2 ? '挑戰成功！完美過關！' : '加油！再試一次吧！'}</h3>
+                        <p class="text-sm text-gray-600 mb-2">得分：${percent}% (${quizScore}/${quizQuestions.length})</p>
+                        <div class="flex justify-center gap-2 text-2xl text-amber-400 mb-6">
+                            ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}
+                        </div>
+                        <div class="flex justify-center gap-3">
+                            <button onclick="switchTab('map')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl text-xs btn-bounce">
+                                🗺️ 返回地圖
+                            </button>
+                            <button onclick="${quizCurrentStageId ? `startStageChallenge(${quizCurrentStageId})` : 'startFreeQuiz()'}" class="px-5 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl text-xs btn-bounce">
+                                🔄 重新測驗
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('quizFeedback').classList.add('hidden');
+                return;
+            }
+
+            const current = quizQuestions[quizIndex];
+            const progressPct = Math.round(((quizIndex + 1) / quizQuestions.length) * 100);
+            document.getElementById('quizProgressBar').style.width = `${progressPct}%`;
+
+            document.getElementById('quizProgressText').innerText = `第 ${quizIndex + 1} / ${quizQuestions.length} 題`;
+            document.getElementById('quizQuestion').innerText = current.word;
+            document.getElementById('quizFurigana').innerText = current.furigana;
+            document.getElementById('quizEmoji').innerText = current.emoji;
+
+            let options = [current];
+            while (options.length < 4) {
+                let random = database[Math.floor(Math.random() * database.length)];
+                if (!options.find(o => o.id === random.id)) {
+                    options.push(random);
+                }
+            }
+            options.sort(() => 0.5 - Math.random());
+
+            const optContainer = document.getElementById('quizOptions');
+            optContainer.innerHTML = '';
+            document.getElementById('quizFeedback').classList.add('hidden');
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "quiz-opt-btn p-4 rounded-2xl border-2 border-pink-100 font-bold text-sm text-gray-700 hover:border-pink-300 hover:bg-pink-50/50 transition text-left flex flex-col justify-between btn-bounce";
+                btn.innerHTML = `
+                    <span class="text-gray-800 text-base">${opt.meaning}</span>
+                    <span class="text-xs text-pink-500 mt-1">(${opt.word} - ${opt.furigana})</span>
+                `;
+                btn.onclick = () => checkQuizAnswer(opt, current, btn);
+                optContainer.appendChild(btn);
+            });
+
+            playTTS(current.word);
+        }
+
+        function checkQuizAnswer(selected, correct, btnEl) {
+            const allBtns = document.querySelectorAll('.quiz-opt-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('quizFeedback');
+            const resultMsg = document.getElementById('quizResultMsg');
+
+            if (selected.id === correct.id) {
+                playSound('correct');
+                quizScore++;
+                document.getElementById('quizScore').innerText = quizScore;
+                btnEl.className = "quiz-opt-btn p-4 rounded-2xl border-2 border-green-500 bg-green-50 font-bold text-sm text-green-700 text-left flex flex-col justify-between";
+                resultMsg.className = "font-bold text-base text-green-600 mb-3";
+                resultMsg.innerText = `✨ 正確！【${correct.word} (${correct.furigana})】意思就是「${correct.meaning}」！`;
+                interactMascot("答對了！讀音和中文意思都記得很熟練哦！👍");
+            } else {
+                playSound('wrong');
+                quizWrong++;
+                document.getElementById('quizWrong').innerText = quizWrong;
+                btnEl.className = "quiz-opt-btn p-4 rounded-2xl border-2 border-red-400 bg-red-50 font-bold text-sm text-red-600 text-left flex flex-col justify-between";
+                resultMsg.className = "font-bold text-base text-red-500 mb-3";
+                resultMsg.innerText = `❌ 答錯囉！正確答案是：「${correct.meaning}」 【日文：${correct.word} (${correct.furigana})】`;
+                interactMascot("沒關係！再看一次平假名與中文，下次一定會！💪");
+            }
+
+            feedback.classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            playSound('click');
+            quizIndex++;
+            showQuizQuestion();
+        }
+
+        function startFreeQuiz() {
+            quizCurrentStageId = null;
+            document.getElementById('quizStageTitle').innerText = "自由練習模式";
+            quizQuestions = [...database].sort(() => 0.5 - Math.random()).slice(0, 10);
+            quizIndex = 0;
+            quizScore = 0;
+            quizWrong = 0;
+            document.getElementById('quizScore').innerText = 0;
+            document.getElementById('quizWrong').innerText = 0;
+            showQuizQuestion();
+        }
+
+        function renderWordGrid() {
+            const grid = document.getElementById('wordGrid');
+            const empty = document.getElementById('emptyState');
+            grid.innerHTML = '';
+
+            let filtered = database.filter(item => {
+                const matchCat = currentCategory === 'all' || 
+                                 (currentCategory === 'fav' && favorites.includes(item.id)) || 
+                                 item.type === currentCategory;
+                const matchSearch = item.word.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    item.furigana.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    item.meaning.includes(searchQuery);
+                return matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+            }
+
+            filtered.forEach(item => {
+                const isFav = favorites.includes(item.id);
+                const isPositive = item.type === 'positive';
+                const bgHeader = isPositive ? 'bg-pink-100/60 text-pink-700' : 'bg-purple-100/60 text-purple-700';
+                
+                const cardHtml = `
+                    <div class="perspective-1000 h-60 cursor-pointer group" onclick="flipCard(this)">
+                        <div class="card-inner relative w-full h-full duration-500 transform-style-3d transition-transform bg-white rounded-3xl shadow-sm hover:shadow-md border border-pink-100 overflow-hidden">
+                            
+                            <!-- Front Card (Kanji + Hiragana) -->
+                            <div class="absolute inset-0 backface-hidden p-5 flex flex-col justify-between">
+                                <div class="flex justify-between items-center">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${bgHeader}">
+                                        ${item.emoji} ${isPositive ? '正面魅力' : '負面魅力'}
+                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="event.stopPropagation(); playTTS('${item.word}')" class="text-gray-400 hover:text-pink-500 transition text-lg p-1 btn-bounce">
+                                            <i class="fa-solid fa-volume-high"></i>
+                                        </button>
+                                        <button onclick="event.stopPropagation(); toggleFav(${item.id})" class="text-lg p-1 ${isFav ? 'text-red-500' : 'text-gray-300 hover:text-red-400'} btn-bounce">
+                                            <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="text-center my-auto">
+                                    <!-- Hiragana Furigana -->
+                                    <p class="text-sm font-extrabold text-pink-500 bg-pink-50 inline-block px-3 py-0.5 rounded-full mb-1">
+                                        ${item.furigana}
+                                    </p>
+                                    <!-- Kanji Word -->
+                                    <h3 class="text-2xl sm:text-3xl font-black text-gray-800">${item.word}</h3>
+                                </div>
+
+                                <p class="text-[11px] text-center text-gray-400 flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-arrows-rotate"></i> 點擊翻看中文釋義
+                                </p>
+                            </div>
+
+                            <!-- Back Card (Japanese + Chinese Meaning) -->
+                            <div class="absolute inset-0 backface-hidden rotate-y-180 p-5 flex flex-col justify-between bg-gradient-to-br ${isPositive ? 'from-pink-50 to-orange-50' : 'from-purple-50 to-blue-50'}">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-extrabold text-pink-600">${item.word} (${item.furigana})</span>
+                                    <button onclick="event.stopPropagation(); playTTS('${item.word}')" class="text-pink-500 hover:text-pink-700 transition btn-bounce">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                    </button>
+                                </div>
+
+                                <div class="text-center my-auto px-2">
+                                    <p class="text-xs text-gray-400 font-bold mb-1">【中文翻譯】</p>
+                                    <p class="text-lg font-black text-gray-800">${item.meaning}</p>
+                                </div>
+
+                                <p class="text-[11px] text-center text-gray-400">點擊翻回正面</p>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHtml;
+            });
+
+            document.getElementById('favCount').innerText = favorites.length;
+        }
+
+        function flipCard(cardEl) {
+            playSound('flip');
+            const inner = cardEl.querySelector('.card-inner');
+            inner.classList.toggle('rotate-y-180');
+        }
+
+        function setCategory(cat) {
+            playSound('click');
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-gray-100 text-gray-600 hover:bg-pink-100 btn-bounce";
+            });
+            document.getElementById(`cat-${cat}`).className = "cat-btn px-4 py-2 rounded-2xl text-xs font-bold bg-pink-500 text-white shadow-sm btn-bounce";
+            renderWordGrid();
+        }
+
+        function filterWords() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderWordGrid();
+        }
+
+        function toggleFav(id) {
+            playSound('click');
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(fId => fId !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('jp_favs', JSON.stringify(favorites));
+            renderWordGrid();
+        }
+
+        function initMatchGame() {
+            clearInterval(matchTimer);
+            matchSeconds = 0;
+            matchedPairs = 0;
+            document.getElementById('matchTimer').innerText = 0;
+            
+            matchTimer = setInterval(() => {
+                matchSeconds++;
+                document.getElementById('matchTimer').innerText = matchSeconds;
+            }, 1000);
+
+            const selected = [...database].sort(() => 0.5 - Math.random()).slice(0, 6);
+            matchCards = [];
+
+            selected.forEach(item => {
+                matchCards.push({ pairId: item.id, text: item.word, furigana: item.furigana, type: 'jp', emoji: item.emoji });
+                matchCards.push({ pairId: item.id, text: item.meaning, type: 'zh', emoji: item.emoji });
+            });
+
+            matchCards.sort(() => 0.5 - Math.random());
+            flippedCards = [];
+
+            const grid = document.getElementById('matchGrid');
+            grid.innerHTML = '';
+
+            matchCards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = "match-card h-28 bg-pink-50 hover:bg-pink-100 rounded-2xl border-2 border-pink-200 flex flex-col items-center justify-center cursor-pointer p-2 transition font-bold text-center select-none shadow-sm btn-bounce";
+                cardEl.dataset.index = index;
+                cardEl.innerHTML = `<span class="text-2xl">❓</span>`;
+                cardEl.onclick = () => handleMatchClick(cardEl, card);
+                grid.appendChild(cardEl);
+            });
+        }
+
+        function handleMatchClick(cardEl, card) {
+            if (flippedCards.length >= 2 || cardEl.classList.contains('matched') || flippedCards.some(f => f.el === cardEl)) {
+                return;
+            }
+
+            playSound('flip');
+            cardEl.className = "match-card h-28 bg-white rounded-2xl border-2 border-pink-400 flex flex-col items-center justify-center cursor-pointer p-2 transition font-bold text-center select-none shadow-md";
+            
+            if (card.type === 'jp') {
+                cardEl.innerHTML = `
+                    <span class="text-xs text-gray-400">${card.emoji} 日文</span>
+                    <span class="text-sm font-black text-gray-800 my-0.5">${card.text}</span>
+                    <span class="text-[11px] font-extrabold text-pink-500">(${card.furigana})</span>
+                `;
+                playTTS(card.text);
+            } else {
+                cardEl.innerHTML = `
+                    <span class="text-xs text-gray-400">${card.emoji} 中文釋義</span>
+                    <span class="text-sm font-extrabold text-gray-800">${card.text}</span>
+                `;
+            }
+
+            flippedCards.push({ el: cardEl, card: card });
+
+            if (flippedCards.length === 2) {
+                const [first, second] = flippedCards;
+                if (first.card.pairId === second.card.pairId && first.card.type !== second.card.type) {
+                    playSound('correct');
+                    setTimeout(() => {
+                        first.el.className = "match-card h-28 bg-green-100 border-2 border-green-300 rounded-2xl flex flex-col items-center justify-center p-2 opacity-60 matched";
+                        second.el.className = "match-card h-28 bg-green-100 border-2 border-green-300 rounded-2xl flex flex-col items-center justify-center p-2 opacity-60 matched";
+                        flippedCards = [];
+                        matchedPairs++;
+                        if (matchedPairs === 6) {
+                            clearInterval(matchTimer);
+                            playSound('clear');
+                            confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                            interactMascot(`🎉 花了 ${matchSeconds} 秒完成配對！日文平假名與中文記得很清楚哦！`);
+                        }
+                    }, 400);
+                } else {
+                    playSound('wrong');
+                    setTimeout(() => {
+                        first.el.className = "match-card h-28 bg-pink-50 hover:bg-pink-100 rounded-2xl border-2 border-pink-200 flex flex-col items-center justify-center cursor-pointer p-2 transition font-bold text-center select-none shadow-sm btn-bounce";
+                        second.el.className = "match-card h-28 bg-pink-50 hover:bg-pink-100 rounded-2xl border-2 border-pink-200 flex flex-col items-center justify-center cursor-pointer p-2 transition font-bold text-center select-none shadow-sm btn-bounce";
+                        first.el.innerHTML = `<span class="text-2xl">❓</span>`;
+                        second.el.innerHTML = `<span class="text-2xl">❓</span>`;
+                        flippedCards = [];
+                    }, 800);
+                }
+            }
+        }
+
+        function generateCharacter() {
+            playSound('clear');
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.5 } });
+
+            const genType = document.querySelector('input[name="genType"]:checked').value;
+            let pool = database;
+            if (genType === 'positive') pool = database.filter(d => d.type === 'positive');
+            if (genType === 'negative') pool = database.filter(d => d.type === 'negative');
+
+            const count = Math.floor(Math.random() * 2) + 3;
+            const selected = [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
+
+            const prefixes = ["魅惑之星", "漆黑魔女", "禁忌主宰", "透明傾城", "神秘詩人", "危險姬君"];
+            const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+
+            document.getElementById('genTitleOutput').innerText = `✨ 『${selected[0].word} (${selected[0].furigana}) の ${randomPrefix}』`;
+
+            const tagsContainer = document.getElementById('genTags');
+            tagsContainer.innerHTML = '';
+
+            let tagTexts = [];
+            selected.forEach(item => {
+                tagTexts.push(`【${item.word} (${item.furigana}) - ${item.meaning}】`);
+                const tagEl = document.createElement('div');
+                tagEl.className = "px-4 py-2.5 bg-white border border-pink-200 rounded-2xl shadow-sm flex items-center gap-2.5 transition hover:scale-105 cursor-pointer btn-bounce";
+                tagEl.onclick = () => playTTS(item.word);
+                tagEl.innerHTML = `
+                    <span class="text-lg">${item.emoji}</span>
+                    <div class="text-left">
+                        <p class="font-extrabold text-gray-800 text-xs sm:text-sm">
+                            ${item.word} <span class="text-pink-500 font-bold">(${item.furigana})</span>
+                        </p>
+                        <p class="text-xs text-gray-600 font-bold mt-0.5">釋義：${item.meaning}</p>
+                    </div>
+                `;
+                tagsContainer.appendChild(tagEl);
+            });
+
+            const summary = document.getElementById('genSummary');
+            summary.classList.remove('hidden');
+            summary.innerHTML = `
+                ✨ <strong>角色魅力屬性標籤：</strong><br>${tagTexts.join(' × ')}<br><br>
+                <span class="text-xs text-gray-600">風格描述：此角色兼具「${selected[0].meaning}」與「${selected[1].meaning}」的氣質吸引力。</span>
+            `;
+
+            interactMascot("角色屬性生成完成！點擊下方按鈕即可複製完整日文與中文資料！");
+        }
+
+        function copyCharResult() {
+            playSound('click');
+            const title = document.getElementById('genTitleOutput').innerText;
+            const summaryText = document.getElementById('genSummary').innerText;
+            const fullText = `${title}\n${summaryText}`;
+
+            const input = document.createElement('textarea');
+            input.value = fullText;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+
+            interactMascot("✨ 已為你複製角色屬性資料（含漢字、假名與中文）囉！");
+        }
+
+        // Modal Logic
+        function openAddModal() { playSound('click'); document.getElementById('addModal').classList.remove('hidden'); }
+        function closeAddModal() { playSound('click'); document.getElementById('addModal').classList.add('hidden'); }
+
+        function saveCustomWord(e) {
+            e.preventDefault();
+            playSound('clear');
+            const newWord = {
+                id: Date.now(),
+                stageId: 1,
+                word: document.getElementById('newWord').value,
+                furigana: document.getElementById('newFurigana').value,
+                meaning: document.getElementById('newMeaning').value,
+                type: document.getElementById('newType').value,
+                emoji: document.getElementById('newEmoji').value || '💫'
+            };
+
+            customWords.push(newWord);
+            localStorage.setItem('jp_custom_words', JSON.stringify(customWords));
+            database.push(newWord);
+
+            closeAddModal();
+            document.getElementById('addWordForm').reset();
+            renderWordGrid();
+            interactMascot("🎉 自訂單字新增成功囉！");
+        }
+
+        // Navigation
+        function switchTab(tabName) {
+            playSound('click');
+            ['map', 'cards', 'quiz', 'match', 'generator'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-gray-600 hover:text-pink-600 transition-all btn-bounce flex items-center gap-1.5";
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all bg-white text-pink-600 shadow-sm btn-bounce flex items-center gap-1.5";
+
+            if (tabName === 'map') renderQuestMap();
+            if (tabName === 'cards') renderWordGrid();
+            if (tabName === 'quiz' && quizQuestions.length === 0) startFreeQuiz();
+            if (tabName === 'match') initMatchGame();
+        }
+
+        // Initialize App
+        window.onload = function() {
+            renderQuestMap();
+            renderWordGrid();
+        };
+    </script>
+</body>
+</html>
